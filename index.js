@@ -9,9 +9,9 @@ exports.handler = async function(event) {
   
   
   
- 
+
   // console.log("eventbody type is ", typeof(event.body), event);
-  // console.log("body: ", event.body, event.body.sid );
+  // console.log("body: ", event.body, event.body.sid );fffff
   // console.log("JASON convertsion:, ", JSON.stringify(event.body), JSON.parse(event.body), event);
    
    console.log("event: ", event);
