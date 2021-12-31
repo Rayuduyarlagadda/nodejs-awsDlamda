@@ -36,41 +36,15 @@ phases:
       nodejs: 10  
     commands:
       - echo Installing Mocha...
-      - npm install -g mocha
-  pre_build:
+
+   build:
     commands:
-      - echo Installing source NPM dependencies...
-      - npm install
-      - npm install unit.js
-  build:
-    commands:
-      - echo Build started on `date`
-      - echo Compiling the Node.js code
-      - mocha test.js
+      - echo "Zipping deployment package..."
+      - zip -g deployment_package.zip Index.js
   post_build:
     commands:
-      - echo Build completed on `date`
-# Include only the files required for your application to run.
-# Do not use recursively include artifacts from node_modules directory as it will include unnecessary packages 
-# used only for building and testing.
-# ExpressJS apps will need other artifact directories included (bin/*, public/*, routes/*, views/* etc).
-artifacts:
-  files:
-    - index.js
-    - package-lock.json
-    -
-    
-© 2021 GitHub, Inc.
-Terms
-Privacy
-Security
-Status
-Docs
-Contact GitHub
-Pricing
-API
-Training
-Blog
-About
+      - echo "Updating lambda Function..."
+      - aws lambda update-function-code --function-name Serverless-api --zip-file fileb://deployment_package.zip
+      - echo "DONE!!"
 
  
