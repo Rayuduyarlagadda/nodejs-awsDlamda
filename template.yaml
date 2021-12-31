@@ -1,3 +1,89 @@
-{
-  
-}
+Resources:
+  CloudBuildServiceRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+            Effect: Allow
+            principal:
+              service: codebuild.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+            Resource: '*'
+      polices:
+        - PolicyName: root
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: CloudWatchLogsPolicy
+                Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+              - Sid: S3GetObjectPolicy
+                Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                Resource: '*'
+              - Sid: S3PutObjectPolicy
+                Effect: Allow
+                Action:
+                  - 's3:PutObject'
+                Resource: '*'
+              - Sid: ECRPullPolicy
+                Effect: Allow
+                Action:
+                  - 'ecr:BatchCheckLayerAvailability'
+                  - 'ecr:GetDownloadUrlForLayer'
+                  - 'ecr:BatchGetImage'
+                Resource: '*'
+              - Sid: ECRAuthPolicy
+                Effect: Allow
+                Action:
+                  - 'ecr:GetAuthorizationToken'
+                Resource: '*'
+              - Sid: S3BucketIdentity
+                Effect: Allow
+                Action:
+                  - 's3:GetBucketAcl'
+                  - 's3:GetBucketLocation'
+                Resource: '*'
+# CodeBuildSourceCredential:
+    #  Type: AWS::CodeBuild::SourceCrendial
+    #  Properties: 
+    #     AuthType: PERSONAL_ACCESS_TOKEN
+    #     ServerType: GITHUB
+    #     Token: '{{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}'
+CodeBuildSourceCredential:
+    Type: 'AWS::CodeBuild::SourceCredential'
+    Properties:
+      Token: '{{resolve:secretsmanager:GITHUB_ACCESS:SecretString:GITHUB_ACCESS_TOKEN}}'
+      ServerType: GITHUB_ENTERPRISE
+      AuthType: PERSONAL_ACCESS_TOKEN
+CodeBuildProject:
+     Type: 'AWS::CodeBuild::Project'
+     Properties:
+        Name: !GetAtt AWS::StackName
+        ServiceRole: !Ref CloudBuildServiceRole.Arn
+        Source:
+            Type: GITHUB
+            Location: https://github.com/Rayuduyarlagadda/nodejs-awsDlamda.git
+            BuildSpec: BuildSpec.yaml
+            Auth:
+                Type: OAUTH
+                Resource: !Ref CodeBuildSourceCredential
+        Artifacts:
+            Type: NO_ARTIACTS
+        TRIGGERS:
+            Webhook: true
+            Pattern: PULL_REQUEST_CREATED, PULL_REQUEST_UPDATED
+            Type: BASE_REF
+            Pattern: !Sub ^refs/heads/masters
+        Environment:
+            Type: LINUX_CONTAINER
+            ComputeType: BUILD_GENERAL_SMALL
+            Image:  aws/codebuild/standard:4.0
